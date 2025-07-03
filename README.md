@@ -19,7 +19,7 @@ https://github.com/mohammad-selim03/task-management-ai.git
 ```
 Go to the project folder:
 ```
-cd /task-management
+cd /task-management-ai
 ```
 
 Open terminal and run
