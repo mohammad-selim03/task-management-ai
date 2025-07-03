@@ -1,27 +1,48 @@
 "use client";
 
-import { useTransition } from 'react';
-import { Sparkles, Loader2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import type { Task, Subtask } from '@/lib/types';
-import { generateAndAssignSubtasks, toggleSubtaskCompletion } from '@/app/actions';
-import { useToast } from '@/hooks/use-toast';
+import { useTransition } from "react";
+import { Sparkles, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import type { Task, Subtask } from "@/lib/types";
+import {
+  generateAndAssignSubtasks,
+  toggleSubtaskCompletion,
+} from "@/app/actions";
+import { useToast } from "@/hooks/use-toast";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from '@/components/ui/accordion';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
+} from "@/components/ui/accordion";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { taskStore } from "@/lib/store";
 
 // A new component for individual subtasks to manage their own state
-function SubtaskItem({ task, subtask, index }: { task: Task, subtask: Subtask, index: number }) {
+function SubtaskItem({
+  task,
+  subtask,
+  index,
+  onSubtasksChanged,
+}: {
+  task: Task;
+  subtask: Subtask;
+  index: number;
+  onSubtasksChanged?: () => void;
+}) {
   const [isTogglePending, startToggleTransition] = useTransition();
 
   const handleToggle = () => {
     startToggleTransition(async () => {
-      await toggleSubtaskCompletion(task.id, index);
+      // Toggle subtask completion in client-side store
+      const updatedSubtasks = [...task.subtasks];
+      updatedSubtasks[index] = {
+        ...updatedSubtasks[index],
+        completed: !updatedSubtasks[index].completed,
+      };
+      await taskStore.updateTask(task.id, { subtasks: updatedSubtasks });
+      if (onSubtasksChanged) onSubtasksChanged();
     });
   };
 
@@ -32,42 +53,62 @@ function SubtaskItem({ task, subtask, index }: { task: Task, subtask: Subtask, i
         checked={subtask.completed}
         onCheckedChange={handleToggle}
         disabled={isTogglePending || task.completed}
-        aria-label={`Mark subtask ${subtask.text} as ${subtask.completed ? 'incomplete' : 'complete'}`}
+        aria-label={`Mark subtask ${subtask.text} as ${
+          subtask.completed ? "incomplete" : "complete"
+        }`}
       />
       <label
         htmlFor={`subtask-${task.id}-${index}`}
         className={cn(
           "text-sm flex-1",
-          subtask.completed ? 'text-muted-foreground line-through' : 'text-foreground',
-          task.completed || isTogglePending ? 'cursor-not-allowed' : 'cursor-pointer'
+          subtask.completed
+            ? "text-muted-foreground line-through"
+            : "text-foreground",
+          task.completed || isTogglePending
+            ? "cursor-not-allowed"
+            : "cursor-pointer"
         )}
       >
         {subtask.text}
       </label>
-      {isTogglePending && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+      {isTogglePending && (
+        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+      )}
     </div>
   );
 }
 
-
-export function SubtaskSection({ task }: { task: Task }) {
+export function SubtaskSection({
+  task,
+  onSubtasksGenerated,
+}: {
+  task: Task;
+  onSubtasksGenerated?: () => void;
+}) {
   const [isGenerating, startGenerating] = useTransition();
   const { toast } = useToast();
 
   const handleGenerateSubtasks = () => {
     startGenerating(async () => {
-      const result = await generateAndAssignSubtasks(task.id, `${task.title}: ${task.description}`);
+      const result = await generateAndAssignSubtasks(
+        task.id,
+        `${task.title}: ${task.description}`
+      );
       if (result.error) {
         toast({
-          title: 'Error generating subtasks',
+          title: "Error generating subtasks",
           description: result.error,
-          variant: 'destructive',
+          variant: "destructive",
         });
       } else {
+        if (result.subtasks && result.subtasks.length > 0) {
+          await taskStore.updateTask(task.id, { subtasks: result.subtasks });
+        }
         toast({
-          title: 'Subtasks generated!',
-          description: 'AI has created new subtasks for you.',
+          title: "Subtasks generated!",
+          description: "AI has created new subtasks for you.",
         });
+        if (onSubtasksGenerated) onSubtasksGenerated();
       }
     });
   };
@@ -76,15 +117,22 @@ export function SubtaskSection({ task }: { task: Task }) {
     return null;
   }
 
-  const completedSubtasks = task.subtasks.filter(s => s.completed).length;
+  const completedSubtasks = task.subtasks.filter((s) => s.completed).length;
 
   return (
-    <Accordion type="single" collapsible className="w-full" defaultValue={task.subtasks.length > 0 ? "subtasks" : undefined}>
+    <Accordion
+      type="single"
+      collapsible
+      className="w-full"
+      defaultValue={task.subtasks.length > 0 ? "subtasks" : undefined}
+    >
       <AccordionItem value="subtasks" className="border-b-0">
         <div className="flex justify-between items-center pr-2">
           <AccordionTrigger className="flex-1 py-1 hover:no-underline">
             <span className="text-sm font-medium">
-              {task.subtasks.length > 0 ? `Subtasks (${completedSubtasks}/${task.subtasks.length})` : 'AI-Powered Subtasks'}
+              {task.subtasks.length > 0
+                ? `Subtasks (${completedSubtasks}/${task.subtasks.length})`
+                : "AI-Powered Subtasks"}
             </span>
           </AccordionTrigger>
           {!task.completed && (
@@ -100,7 +148,7 @@ export function SubtaskSection({ task }: { task: Task }) {
               ) : (
                 <Sparkles className="mr-2 h-4 w-4 text-accent" />
               )}
-              {task.subtasks.length > 0 ? 'Regenerate' : 'Generate'}
+              {task.subtasks.length > 0 ? "Regenerate" : "Generate"}
             </Button>
           )}
         </div>
@@ -109,7 +157,12 @@ export function SubtaskSection({ task }: { task: Task }) {
             <ul className="mt-2 space-y-3 pl-2">
               {task.subtasks.map((subtask, index) => (
                 <li key={index}>
-                    <SubtaskItem task={task} subtask={subtask} index={index} />
+                  <SubtaskItem
+                    task={task}
+                    subtask={subtask}
+                    index={index}
+                    onSubtasksChanged={onSubtasksGenerated}
+                  />
                 </li>
               ))}
             </ul>

@@ -1,19 +1,19 @@
 "use client";
 
-import { useTransition } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Plus, Loader2 } from 'lucide-react';
+import { useTransition } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Plus, Loader2 } from "lucide-react";
 
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
+} from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -21,40 +21,50 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/hooks/use-toast';
-import { createTask } from '@/app/actions';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import { taskStore } from "@/lib/store";
 
 const taskSchema = z.object({
-  title: z.string().min(2, { message: 'Title must be at least 2 characters.' }),
+  title: z.string().min(2, { message: "Title must be at least 2 characters." }),
   description: z.string().optional(),
 });
 
-export function CreateTaskForm() {
+type CreateTaskFormProps = {
+  onTaskCreated?: (data: { title: string; description: string }) => void;
+};
+
+export function CreateTaskForm({ onTaskCreated }: CreateTaskFormProps) {
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
 
   const form = useForm<z.infer<typeof taskSchema>>({
     resolver: zodResolver(taskSchema),
     defaultValues: {
-      title: '',
-      description: '',
+      title: "",
+      description: "",
     },
   });
 
   const onSubmit = (values: z.infer<typeof taskSchema>) => {
     startTransition(async () => {
-      await createTask({
+      await taskStore.createTask({
         title: values.title,
-        description: values.description || '',
+        description: values.description || "",
       });
       toast({
         title: "Task created!",
         description: `"${values.title}" has been added to the list.`,
       });
       form.reset();
+      if (onTaskCreated) {
+        onTaskCreated({
+          title: values.title,
+          description: values.description || "",
+        });
+      }
     });
   };
 

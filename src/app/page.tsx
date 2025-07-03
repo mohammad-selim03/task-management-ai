@@ -1,11 +1,7 @@
-import { taskStore } from '@/lib/store';
-import { CreateTaskForm } from '@/components/create-task-form';
-import { TaskList } from '@/components/task-list';
-import { ListChecks } from 'lucide-react';
+import { TaskManager } from "@/components/task-manager";
+import { ListChecks } from "lucide-react";
 
-export default async function Home() {
-  const tasks = await taskStore.getTasks();
-
+export default function Home() {
   return (
     <main className="min-h-screen bg-background relative">
       <div className="absolute top-0 left-0 -z-10 h-full w-full bg-gradient-to-br from-primary/10 via-transparent to-accent/10" />
@@ -21,12 +17,9 @@ export default async function Home() {
             Your intelligent assistant for managing tasks.
           </p>
         </header>
-        
         <div className="space-y-8">
-          <CreateTaskForm />
-          <TaskList tasks={tasks} />
+          <TaskManager />
         </div>
-        
         <footer className="text-center mt-16 text-muted-foreground text-sm">
           <p>Powered by Gemini Task with advanced AI</p>
         </footer>
