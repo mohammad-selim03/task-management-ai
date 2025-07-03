@@ -15,9 +15,12 @@ Run on Local server:
 
 Clone the repo:
 ```bash
-git remote add origin https://github.com/mohammad-selim03/task-management-ai.git
+https://github.com/mohammad-selim03/task-management-ai.git
 ```
-Go on the directory root
+Go to the project folder:
+```
+cd /task-management
+```
 
 Open terminal and run
 
