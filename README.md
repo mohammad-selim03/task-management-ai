@@ -18,9 +18,10 @@ Clone the repo:
 git remote add origin https://github.com/mohammad-selim03/task-management-ai.git
 ```
 Go on the directory root
-```
+
 Open terminal and run
-```bash
+
+```
 pnpm install
 pnpm dev
 ```
