@@ -26,7 +26,14 @@ Open terminal and run
 
 ```
 pnpm install
-pnpm dev
+pnpm run dev
+
+```
+
+Open any browser and paste this:
+
+```
+http://localhost:3002
 ```
 
 Create .env.local:
