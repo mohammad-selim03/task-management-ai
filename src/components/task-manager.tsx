@@ -34,8 +34,8 @@ export function TaskManager() {
     title: string;
     description: string;
   }) => {
-    const newTask = await taskStore.createTask(data);
-    setTasks((prev) => [newTask, ...prev]);
+    await taskStore.createTask(data);
+    await reloadTasks();
   };
 
   return (

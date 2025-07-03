@@ -50,20 +50,16 @@ export function CreateTaskForm({ onTaskCreated }: CreateTaskFormProps) {
 
   const onSubmit = (values: z.infer<typeof taskSchema>) => {
     startTransition(async () => {
-      await taskStore.createTask({
-        title: values.title,
-        description: values.description || "",
-      });
-      toast({
-        title: "Task created!",
-        description: `"${values.title}" has been added to the list.`,
-      });
-      form.reset();
       if (onTaskCreated) {
-        onTaskCreated({
+        await onTaskCreated({
           title: values.title,
           description: values.description || "",
         });
+        toast({
+          title: "Task created!",
+          description: `"${values.title}" has been added to the list.`,
+        });
+        form.reset();
       }
     });
   };
